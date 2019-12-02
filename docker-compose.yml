@@ -16,7 +16,8 @@ services:
 
     environment:
       SECRET_KEY: super-secret-key
-      REDIS_URL: redis://redis
+      REDIS_URL: redis
+      REDIS_PORT: 6379
       DATABASE_URL: ''
       DEBUG: 'true'
 

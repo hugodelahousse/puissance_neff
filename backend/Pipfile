@@ -11,6 +11,8 @@ channels = "*"
 channels-redis = "*"
 daphne = "*"
 django-environ = "*"
+pytest-django = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.7"
