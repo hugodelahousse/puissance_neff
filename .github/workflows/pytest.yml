@@ -19,3 +19,9 @@ jobs:
       - name: Run all tests
         run: pytest
         working-directory: ./backend
+        env:
+          SECRET_KEY: secret_key
+          DEBUG: 1
+          REDIS_HOST: redis
+          DATABASE_URL: ''
+          REDIS_PORT: 6379
