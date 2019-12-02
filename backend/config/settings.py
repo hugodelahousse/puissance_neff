@@ -131,7 +131,10 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "consumer": {"format": "{levelname}|{socket_id} => {message}", "style": "{"}
+        "consumer": {
+            "format": "{levelname}|{room_name}|{socket_id} => {message}",
+            "style": "{",
+        }
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler"},

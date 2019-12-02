@@ -22,6 +22,11 @@ class Connect4GameState:
     board: None
 
 
+class ConsumerLoggingAdapter(_logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return msg, {"extra": self.extra["consumer"].get_logger_data()}
+
+
 class Connect4Consumer(MessageHandler, AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,12 +39,12 @@ class Connect4Consumer(MessageHandler, AsyncJsonWebsocketConsumer):
             turn=0,
             board=None,
         )
-        self.logger = _logging.LoggerAdapter(
-            _logging.getLogger("connect4.consumers"), self.get_logger_data()
+        self.logger = ConsumerLoggingAdapter(
+            _logging.getLogger("connect4.consumers"), {"consumer": self}
         )
 
     def get_logger_data(self):
-        return {"socket_id": id(self)}
+        return {"socket_id": id(self), "room_name": self.room_group_name}
 
     async def group_send(self, *args, **kwargs):
         return await self.channel_layer.group_send(
