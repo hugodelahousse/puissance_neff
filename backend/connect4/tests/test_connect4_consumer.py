@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import asdict
 
 import pytest
@@ -47,6 +48,7 @@ async def test_three_players_fail():
     connected, _ = await player3.connect()
     assert connected
 
+    await asyncio.sleep(0.2)
     await player3.send_message_to(UserJoinMessage(username="player3"))
 
     assert (await player3.receive_json_from())["type"] == MessageType.game_full
