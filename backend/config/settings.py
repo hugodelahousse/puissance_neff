@@ -130,15 +130,22 @@ CHANNEL_LAYERS = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "formatters": {
+        "consumer": {"format": "{levelname}|{socket_id} => {message}", "style": "{"}
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+        "consumer_console": {"class": "logging.StreamHandler", "formatter": "consumer"},
+    },
     "loggers": {
         "django": {
             "handlers": ["console"],
             "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
         },
         "connect4": {
-            "handlers": ["console"],
+            "handlers": ["consumer_console"],
             "level": os.getenv("CONNECT4_LOG_LEVEL", "DEBUG" if DEBUG else "INFO"),
+            "formatters": ["consumer"],
         },
     },
 }
