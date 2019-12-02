@@ -45,15 +45,26 @@ class Connect4Consumer(GameConsumer):
         )
 
     async def add_player(self, message):
-        self.logger.debug(
-            "Setting %s to username: %s", message["player_id"], message["username"]
-        )
-        self.game_state.players[message["player_id"]] = message["username"]
+        player_id, username = message["player_id"], message["username"]
+        if player_id in self.game_state.players:
+            return
+
+        if (
+            player_id not in self.game_state.players
+            and len(self.game_state.players) > 1
+        ):
+            self.logger.warning(
+                "Received add_player but two players are already present, skipping..."
+            )
+            return
+
+        self.logger.debug("Setting %s to username: %s", player_id, username)
+        self.game_state.players[player_id] = username
 
         self.logger.debug("Current players: %s", self.game_state.players)
 
         # Only one of the sockets sends the start game message
-        if len(self.game_state.players) > 1 and id(self) == message["player_id"]:
+        if len(self.game_state.players) > 1 and id(self) == player_id:
             self.logger.debug("Sending start game message")
             await self.group_send(
                 {
