@@ -1,11 +1,12 @@
-from dataclasses import dataclass, asdict
-from typing import Mapping, List, Callable, ClassVar, Any, Tuple
+from dataclasses import dataclass, asdict, field
+from typing import Mapping, List, Callable, Tuple
 from enum import Enum
 from collections import defaultdict
 
 
 class MessageType(str, Enum):
     start_game = "start_game"
+    game_full = "game_full"
     user_join = "user_join"
     play_column = "play_column"
     invalid_play = "invalid_play"
@@ -13,27 +14,37 @@ class MessageType(str, Enum):
 
 
 @dataclass
-class UserJoinMessage:
+class Message:
+    type: MessageType = field(init=False)
+
+
+@dataclass
+class UserJoinMessage(Message):
     type = MessageType.user_join
     username: str
 
 
 @dataclass
-class PlayColumnMessage:
+class PlayColumnMessage(Message):
     type = MessageType.play_column
     column: int
 
 
 @dataclass
-class StartGameMessage:
+class StartGameMessage(Message):
     type = MessageType.start_game
     first_player: bool
 
 
-HANDLERS: Mapping[MessageType, List[Tuple[Callable, Any]]] = defaultdict(list)
+@dataclass
+class GameFullMessage(Message):
+    type = MessageType.game_full
 
 
-def register_handler(message_type):
+HANDLERS: Mapping[MessageType, List[Tuple[Callable, Message]]] = defaultdict(list)
+
+
+def register_handler(message_type: Message):
     def inner(func):
         HANDLERS[message_type.type.value].append((func, message_type))
         return func
@@ -57,5 +68,5 @@ class MessageHandler:
                 self.logger.exception(e)
                 await self.close()
 
-    async def send_message(self, message):
+    async def send_message(self, message: Message):
         await self.send_json(asdict(message))
