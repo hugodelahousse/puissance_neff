@@ -8,6 +8,7 @@ from connect4.messages import (
     UserJoinMessage,
     StartGameMessage,
     GameFullMessage,
+    BoardStateMessage,
 )
 
 
@@ -90,3 +91,8 @@ class Connect4Consumer(GameConsumer):
             await self.group_send(
                 {"type": "add_player", "player_id": id, "username": username}
             )
+
+    async def send_board(self):
+        await self.send_message(
+            BoardStateMessage(board=self.game_state.board.to_list())
+        )
