@@ -52,7 +52,7 @@ class Board:
         """
         for row in range(Board.HEIGHT):
             if self.get_position(row, column) == BoardState.EMPTY:
-                self.set_position(row, column, BoardState[color.value])
+                self.set_position(row, column, BoardState(color.value))
                 return (row, column), self.check_win(row, column)
 
         return None, False
@@ -66,7 +66,7 @@ class Board:
         color: BoardState,
     ) -> int:
         column += delta_column
-        delta_row += delta_row
+        row += delta_row
         if (
             not self.valid_column(column)
             or not self.valid_row(row)
@@ -98,3 +98,17 @@ class Board:
             [self.get_position(row, column) for column in range(self.WIDTH)]
             for row in range(self.HEIGHT)
         ]
+
+    def __str__(self):
+        representation = {
+            BoardState.RED: "🔴",
+            BoardState.YELLOW: "🔵",
+            BoardState.EMPTY: "⁣⚪",
+        }
+        s = ""
+        for row in reversed(range(self.HEIGHT)):
+            for column in range(self.WIDTH):
+                s += representation[self.get_position(row, column)]
+            s += "\n"
+
+        return s

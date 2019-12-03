@@ -11,6 +11,7 @@ from connect4.messages import (
     BoardStateMessage,
     PlayColumnMessage,
     YourTurnMessage,
+    InvalidPlayMessage,
 )
 
 
@@ -21,7 +22,7 @@ class Connect4GameState:
     game_started: bool = False
     current_player: Optional[int] = None
     turn: int = 0
-    board: Board = None
+    board: Board = Board()
     player_color: BoardPlayer = BoardPlayer.YELLOW
 
 
@@ -102,7 +103,49 @@ class Connect4Consumer(GameConsumer):
                 {"type": "add_player", "player_id": id, "username": username}
             )
 
-    async def send_board(self):
-        await self.send_message(
-            BoardStateMessage(board=self.game_state.board.to_list())
+    async def play_position(self, message):
+        self.game_state.board.set_position(
+            message["row"], message["column"], message["color"]
         )
+
+        # Ugly AF
+        self.game_state.current_player = next(
+            iter(set(self.game_state.players) - {self.game_state.current_player})
+        )
+
+        winner = message["color"] if message["winning_move"] else None
+
+        await self.send_message(
+            BoardStateMessage(board=self.game_state.board.to_list(), winner=winner)
+        )
+
+        if self.game_state.current_player == id(self):
+            await self.send_message(YourTurnMessage())
+
+    @register_handler(PlayColumnMessage)
+    async def play_column(self, message: PlayColumnMessage):
+        if id(self) != self.game_state.current_player:
+            self.logger.info(
+                "PlayColumn: Wrong player: expecting %s", self.game_state.current_player
+            )
+            return
+
+        position, win = self.game_state.board.play(
+            message.column, self.game_state.player_color
+        )
+
+        if not position:
+            return await self.send_message(InvalidPlayMessage())
+
+        row, column = position
+
+        await self.group_send(
+            {
+                "type": "play_position",
+                "row": row,
+                "column": column,
+                "color": self.game_state.player_color,
+                "winning_move": win,
+            }
+        )
+        self.logger.debug(self.game_state.board)

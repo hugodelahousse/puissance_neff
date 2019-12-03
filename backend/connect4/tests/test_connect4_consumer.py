@@ -4,7 +4,7 @@ from dataclasses import asdict
 import pytest
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
-from connect4.messages import UserJoinMessage, MessageType
+from connect4.messages import UserJoinMessage, MessageType, PlayColumnMessage
 from connect4.routing import websocket_urlpatterns
 
 
@@ -52,3 +52,36 @@ async def test_three_players_fail():
     await player3.send_message_to(UserJoinMessage(username="player3"))
 
     assert (await player3.receive_json_from())["type"] == MessageType.game_full
+
+
+@pytest.mark.asyncio
+async def test_moves():
+
+    player1, player2 = await connect_players("game3")
+
+    current_player = None
+    try:
+        await player1.receive_json_from()
+        current_player = player1
+    except TimeoutError:
+        pass
+
+    if current_player is None:
+        await player2.receive_json_from()
+        current_player = player2
+
+    def switch_players():
+        return player1 if current_player is player2 else player2
+
+    await current_player.send_message_to(PlayColumnMessage(column=1))
+    await current_player.receive_json_from()
+
+    current_player = switch_players()
+
+    await current_player.send_message_to(PlayColumnMessage(column=1))
+    await current_player.receive_json_from()
+
+    current_player = switch_players()
+
+    await current_player.send_message_to(PlayColumnMessage(column=1))
+    await current_player.receive_json_from()

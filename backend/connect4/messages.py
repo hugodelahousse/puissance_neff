@@ -1,9 +1,9 @@
 from dataclasses import dataclass, asdict, field
-from typing import Mapping, List, Callable, Tuple
+from typing import Mapping, List, Callable, Tuple, Optional
 from enum import Enum
 from collections import defaultdict
 
-from connect4.game_logic import BoardState
+from connect4.game_logic import BoardState, BoardPlayer
 
 
 class MessageType(str, Enum):
@@ -49,11 +49,17 @@ class GameFullMessage(Message):
 class BoardStateMessage(Message):
     type = MessageType.board_state
     board: List[List[BoardState]]
+    winner: Optional[BoardPlayer]
 
 
 @dataclass
 class YourTurnMessage(Message):
     type = MessageType.your_turn
+
+
+@dataclass
+class InvalidPlayMessage(Message):
+    type = MessageType.invalid_play
 
 
 HANDLERS: Mapping[MessageType, List[Tuple[Callable, Message]]] = defaultdict(list)
@@ -77,11 +83,7 @@ class MessageHandler:
         self.logger.debug("Received message: %s", message)
 
         for handler, structure in handlers:
-            try:
-                await handler(self, structure(**message))
-            except Exception as e:
-                self.logger.exception(e)
-                await self.close()
+            await handler(self, structure(**message))
 
     async def send_message(self, message: Message):
         await self.send_json(asdict(message))
