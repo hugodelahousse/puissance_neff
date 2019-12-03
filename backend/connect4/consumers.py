@@ -1,10 +1,8 @@
 from dataclasses import dataclass
-from typing import Mapping, Optional, Dict
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-import logging as _logging
+from typing import Optional, Dict
 
+from connect4.game_consumer import GameConsumer
 from connect4.messages import (
-    MessageHandler,
     register_handler,
     UserJoinMessage,
     StartGameMessage,
@@ -22,53 +20,19 @@ class Connect4GameState:
     board: None
 
 
-class ConsumerLoggingAdapter(_logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        return msg, {"extra": self.extra["consumer"].get_logger_data()}
-
-
-class Connect4Consumer(MessageHandler, AsyncJsonWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.room_group_name = None
-        self.game_state: Connect4GameState = Connect4GameState(
-            game_uuid=None,
-            players={},
-            game_started=False,
-            current_player=None,
-            turn=0,
-            board=None,
-        )
-        self.logger = ConsumerLoggingAdapter(
-            _logging.getLogger("connect4.consumers"), {"consumer": self}
-        )
-
-    def get_logger_data(self):
-        return {"socket_id": id(self), "room_name": self.room_group_name}
-
-    async def group_send(self, *args, **kwargs):
-        return await self.channel_layer.group_send(
-            self.room_group_name, *args, **kwargs
-        )
+class Connect4Consumer(GameConsumer):
+    GameStateClass = Connect4GameState
 
     async def connect(self):
         self.game_state.game_uuid = self.scope["url_route"]["kwargs"]["game_id"]
-        self.room_group_name = "game_%s" % self.game_state.game_uuid
+        self.game_group_name = "game_%s" % self.game_state.game_uuid
 
-        self.logger.debug("Connecting to game room: %s", self.room_group_name)
+        self.logger.debug("Connecting to game room")
         # Join room group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.game_group_name, self.channel_name)
         await self.group_send({"type": "join_game"})
 
         await self.accept()
-
-    async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
-    # Receive message from WebSocket
-    async def receive_json(self, content, **kwargs):
-        await self.handle_message(content)
 
     @register_handler(UserJoinMessage)
     async def user_join(self, message: UserJoinMessage):
