@@ -2,13 +2,15 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict
 
 from connect4.game_consumer import GameConsumer
-from connect4.game_logic import Board
+from connect4.game_logic import Board, BoardPlayer
 from connect4.messages import (
     register_handler,
     UserJoinMessage,
     StartGameMessage,
     GameFullMessage,
     BoardStateMessage,
+    PlayColumnMessage,
+    YourTurnMessage,
 )
 
 
@@ -20,6 +22,7 @@ class Connect4GameState:
     current_player: Optional[int] = None
     turn: int = 0
     board: Board = None
+    player_color: BoardPlayer = BoardPlayer.YELLOW
 
 
 class Connect4Consumer(GameConsumer):
@@ -78,9 +81,16 @@ class Connect4Consumer(GameConsumer):
     async def start_game(self, message):
         self.logger.debug("Starting game")
         self.game_state.current_player = message["first_player_id"]
+
         await self.send_message(
             StartGameMessage(first_player=id(self) == message["first_player_id"])
         )
+
+        if id(self) == self.game_state.current_player:
+            self.game_state.player_color = BoardPlayer.YELLOW
+            await self.send_message(YourTurnMessage())
+        else:
+            self.game_state.player_color = BoardPlayer.RED
 
     async def join_game(self, message):
         self.logger.debug(

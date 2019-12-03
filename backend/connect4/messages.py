@@ -14,6 +14,7 @@ class MessageType(str, Enum):
     invalid_play = "invalid_play"
     player_win = "player_win"
     board_state = "board_state"
+    your_turn = "your_turn"
 
 
 @dataclass
@@ -48,6 +49,11 @@ class GameFullMessage(Message):
 class BoardStateMessage(Message):
     type = MessageType.board_state
     board: List[List[BoardState]]
+
+
+@dataclass
+class YourTurnMessage(Message):
+    type = MessageType.your_turn
 
 
 HANDLERS: Mapping[MessageType, List[Tuple[Callable, Message]]] = defaultdict(list)
