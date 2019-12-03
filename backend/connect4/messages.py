@@ -3,6 +3,8 @@ from typing import Mapping, List, Callable, Tuple
 from enum import Enum
 from collections import defaultdict
 
+from connect4.game_logic import BoardState
+
 
 class MessageType(str, Enum):
     start_game = "start_game"
@@ -11,6 +13,7 @@ class MessageType(str, Enum):
     play_column = "play_column"
     invalid_play = "invalid_play"
     player_win = "player_win"
+    board_state = "board_state"
 
 
 @dataclass
@@ -39,6 +42,12 @@ class StartGameMessage(Message):
 @dataclass
 class GameFullMessage(Message):
     type = MessageType.game_full
+
+
+@dataclass
+class BoardStateMessage(Message):
+    type = MessageType.board_state
+    board: List[List[BoardState]]
 
 
 HANDLERS: Mapping[MessageType, List[Tuple[Callable, Message]]] = defaultdict(list)
