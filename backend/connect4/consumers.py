@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Dict
 
 from connect4.game_consumer import GameConsumer
+from connect4.game_logic import Board
 from connect4.messages import (
     register_handler,
     UserJoinMessage,
@@ -12,12 +13,12 @@ from connect4.messages import (
 
 @dataclass
 class Connect4GameState:
-    game_uuid: Optional[str]
-    players: Dict[int, str]
-    game_started: bool
-    current_player: Optional[int]
-    turn: int
-    board: None
+    game_uuid: Optional[str] = None
+    players: Dict[int, str] = field(default_factory=dict)
+    game_started: bool = False
+    current_player: Optional[int] = None
+    turn: int = 0
+    board: Board = None
 
 
 class Connect4Consumer(GameConsumer):
