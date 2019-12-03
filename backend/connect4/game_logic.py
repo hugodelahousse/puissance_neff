@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 
 class BoardState(IntEnum):
@@ -44,13 +44,18 @@ class Board:
     def valid_row(cls, row: int):
         return 0 <= row < cls.HEIGHT
 
-    def play(self, column: int, color: BoardPlayer) -> Tuple[bool, str]:
+    def play(
+        self, column: int, color: BoardPlayer
+    ) -> Tuple[Optional[Tuple[int, int]], bool]:
+        """
+        :return: A tuple with the position played, and whether or not the move was a win
+        """
         for row in range(Board.HEIGHT):
             if self.get_position(row, column) == BoardState.EMPTY:
                 self.set_position(row, column, BoardState[color.value])
-                return True, ""
+                return (row, column), self.check_win(row, column)
 
-        return False, "Column was full"
+        return None, False
 
     def check_win_rec(
         self,
@@ -59,7 +64,7 @@ class Board:
         delta_row: int,
         delta_column: int,
         color: BoardState,
-    ):
+    ) -> int:
         column += delta_column
         delta_row += delta_row
         if (
@@ -71,7 +76,7 @@ class Board:
 
         return 1 + self.check_win_rec(row, column, delta_row, delta_column, color)
 
-    def check_win(self, row, column):
+    def check_win(self, row: int, column: int) -> bool:
         color = self.get_position(row, column)
         if color == BoardState.EMPTY:
             return False
@@ -88,7 +93,7 @@ class Board:
 
         return False
 
-    def to_json(self):
+    def to_list(self) -> List[List[BoardState]]:
         return [
             [self.get_position(row, column) for column in range(self.WIDTH)]
             for row in range(self.HEIGHT)
