@@ -22,7 +22,7 @@ class Connect4GameState:
     game_started: bool = False
     current_player: Optional[int] = None
     turn: int = 0
-    board: Board = Board()
+    board: Board = field(default_factory=Board)
     player_color: BoardPlayer = BoardPlayer.YELLOW
 
 
