@@ -4,6 +4,7 @@ import LensIcon from '@material-ui/icons/Lens';
 
 interface BoardProps {
   board: Cell[][];
+  onClick: (column: number) => void;
 }
 
 function GetCellColor(cell: Cell): string {
@@ -20,13 +21,17 @@ function GetCellColor(cell: Cell): string {
   }
 }
 
-function Board({ board }: BoardProps) {
+function Board({ board, onClick }: BoardProps) {
   return (
     <>
       {board.map((row, i) => (
-        <div>
+        <div key={i}>
           {row.map((col, j) => (
-            <LensIcon style={{ color: GetCellColor(col), fontSize: '120px' }} />
+            <LensIcon
+              key={j}
+              style={{ color: GetCellColor(col), fontSize: '120px' }}
+              onClick={() => onClick(j)}
+            />
           ))}
         </div>
       ))}
